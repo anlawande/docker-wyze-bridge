@@ -209,13 +209,8 @@ class WyzeBridge:
         log.warning("🔐 MFA Token Required")
         while True:
             verification = {}
-            if "PrimaryPhone" in auth.mfa_options:
-                verification["type"] = "PrimaryPhone"
-                verification["id"] = wyzecam.send_sms_code(auth)
-                log.info("💬 SMS code requested")
-            else:
-                verification["type"] = "TotpVerificationCode"
-                verification["id"] = auth.mfa_details["totp_apps"][0]["app_id"]
+            verification["type"] = "TotpVerificationCode"
+            verification["id"] = auth.mfa_details["totp_apps"][0]["app_id"]
             if "TotpVerificationCode" in auth.mfa_options:
                 if env_key := env_bool("totp_key", style="original"):
                     verification["code"] = mintotp.totp(
