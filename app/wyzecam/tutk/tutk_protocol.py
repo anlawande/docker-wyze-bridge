@@ -4,7 +4,7 @@ import pathlib
 import time
 import typing
 from ctypes import LittleEndianStructure, c_char, c_uint16, c_uint32
-from typing import Optional
+from typing import Optional, Tuple
 
 import xxtea
 
@@ -675,7 +675,7 @@ class K10630SetAlarmFlashing(TutkWyzeProtocolMessage):
     def encode(self) -> bytes:
         return encode(10630, 2, bytes([self.enabled, self.enabled]))
 
-    def parse_response(self, resp_data) -> tuple[int, int]:
+    def parse_response(self, resp_data) -> Tuple[int, int]:
         return resp_data[0], resp_data[1]
 
 
@@ -693,7 +693,7 @@ class K10632GetAlarmFlashing(TutkWyzeProtocolMessage):
     def __init__(self):
         super().__init__(10632)
 
-    def parse_response(self, resp_data) -> tuple[int, int]:
+    def parse_response(self, resp_data) -> Tuple[int, int]:
         return resp_data[0], resp_data[1]
 
 

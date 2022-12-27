@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from multiprocessing.synchronize import Event
 from queue import Empty
 from subprocess import DEVNULL, PIPE, Popen, TimeoutExpired
-from typing import Any, Dict, Generator, List, NoReturn, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, NoReturn, Optional, Tuple, Union, Set
 
 import mintotp
 import paho.mqtt.client
@@ -38,11 +38,11 @@ class WyzeBridge:
         self.timeout: int = env_bool("RTSP_READTIMEOUT", 15, style="int")
         self.connect_timeout: int = env_bool("CONNECT_TIMEOUT", 20, style="int")
         self.keep_bad_frames: bool = env_bool("KEEP_BAD_FRAMES", style="bool")
-        self.token_path: str = "/config/wyze-bridge/" if self.hass else "/tokens/"
-        self.img_path: str = f'/{env_bool("IMG_DIR", "img").strip("/")}/'
-        self.cameras: dict[str, WyzeCamera] = {}
-        self.streams: dict[str, dict] = {}
-        self.fw_rtsp: set[str] = set()
+        self.token_path: str = "/config/wyze-bridge/" if self.hass else "./tokens/"
+        self.img_path: str = f'{env_bool("IMG_DIR", "./img").strip("/")}/'
+        self.cameras: Dict[str, WyzeCamera] = {}
+        self.streams: Dict[str, dict] = {}
+        self.fw_rtsp: Set[str] = set()
         self.rtsp = None
         self.mfa_req: Optional[str] = None
         self.auth: Optional[wyzecam.WyzeCredential] = None
@@ -711,7 +711,7 @@ class WyzeBridge:
             return boa_info.get("last_photo")
         return None
 
-    def cam_cmd(self, cam_name: str, cmd: str) -> dict[str, Any]:
+    def cam_cmd(self, cam_name: str, cmd: str) -> Dict[str, Any]:
         """Cam command."""
         resp = {"status": "error", "command": cmd}
         if env_bool("disable_control"):
@@ -862,7 +862,7 @@ def get_cam_params(
     return fps, audio
 
 
-def get_ffmpeg_cmd(uri: str, cam: WyzeCamera, audio: Optional[dict]) -> list[str]:
+def get_ffmpeg_cmd(uri: str, cam: WyzeCamera, audio: Optional[dict]) -> List[str]:
     """Return the ffmpeg cmd with options from the env."""
     vcodec = "h264"
     if vid_param := cam.camera_info.get("videoParm"):
@@ -1131,7 +1131,7 @@ def pull_last_image(cam: dict, path: str, as_snap: bool = False):
 
 def get_header_dates(
     resp_header: dict,
-) -> tuple[Optional[datetime], Optional[datetime]]:
+) -> Tuple[Optional[datetime], Optional[datetime]]:
     """Get dates from boa header."""
     try:
         date = datetime.strptime(resp_header.get("Date"), "%a, %d %b %Y %X %Z")

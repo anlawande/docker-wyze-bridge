@@ -2,6 +2,7 @@ import logging
 import os
 import signal
 import sys
+from custom import gas
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -48,6 +49,7 @@ def verify_password(username, password):
 def create_app():
     setup_logging()
     app = Flask(__name__)
+    gas.init(app, auth)
     global wb
     if not wb:
         wb = WyzeBridge()

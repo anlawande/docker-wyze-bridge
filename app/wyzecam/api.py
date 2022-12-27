@@ -4,7 +4,7 @@ from hashlib import md5
 from typing import Any, Dict, List, Optional
 
 import requests
-from wyzecam.api_models import WyzeAccount, WyzeCamera, WyzeCredential
+from .api_models import WyzeAccount, WyzeCamera, WyzeCredential
 
 IOS_VERSION = "16.1.2"
 APP_VERSION = "2.37.2.1"
@@ -259,7 +259,7 @@ def _get_payload(access_token: str, phone_id: str):
     }
 
 
-def get_headers(phone_id: str, user_agent: Optional[str] = None) -> dict[str, str]:
+def get_headers(phone_id: str, user_agent: Optional[str] = None) -> Dict[str, str]:
     """Format request headers to be iOS like."""
     return {
         "X-API-Key": WYZE_APP_API_KEY,
