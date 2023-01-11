@@ -7,3 +7,6 @@ totp
 .vscode
 tokens/
 *.pyc
+app/img/*.jpeg
+app/img/*.jpg
+app/img/markers.json

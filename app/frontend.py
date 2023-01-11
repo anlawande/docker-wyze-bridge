@@ -49,11 +49,11 @@ def verify_password(username, password):
 def create_app():
     setup_logging()
     app = Flask(__name__)
-    gas.init(app, auth)
     global wb
     if not wb:
         wb = WyzeBridge()
         wb.start()
+    gas.init(app, auth, wb)
 
     @app.route("/")
     @auth.login_required

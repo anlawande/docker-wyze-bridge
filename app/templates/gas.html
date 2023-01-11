@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Titles</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Wyze-Bridge</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="{{ 'static/site.css' if hass else url_for('static',filename='site.css') }}"/>
+<style lang="text/css">
+html, body {
+    overflow: auto;
+}
+
+.static {
+    cursor: not-allowed;
+}
+
+.draggable {
+    cursor: move;
+}
+
+#reference-img {
+    position: absolute;
+    min-width: fit-content;
+}
+
+#viewbox {
+    height: 1080px;
+    width: 1920px;
+    position: absolute;
+    z-index: 10;
+}
+#svg-container {
+    position: relative;
+}
+#save-markers-btn {
+    margin: 10px;
+    width: 100px;
+}
+</style>
+</head>
+<body>
+<script type="application/javascript">
+function onload() {
+    const refImgElem = document.querySelector("#reference-img");
+
+    fetch('/gas/markers')
+        .then((response) => response.json())
+        .then(setGasMarkers);
+
+    const saveMarkersBtn = document.getElementById("save-markers-btn");
+    saveMarkersBtn.addEventListener("click", saveMarkers);
+}
+
+function saveMarkers() {
+    const svgElem = document.getElementById("viewbox");
+    const markers = [];
+
+    for (let i = 0; i < svgElem.children.length; i++) {
+        const transform = getElementTransform(svgElem, svgElem.children[i]);
+        const posX = parseInt(svgElem.children[i].getAttribute("cx")) + transform.matrix.e;
+        const posY = parseInt(svgElem.children[i].getAttribute("cy")) + transform.matrix.f;
+
+        markers.push({
+            position: { x: posX, y: posY, },
+            radius: svgElem.children[i].getAttribute("r"),
+            name: svgElem.children[i].id.replace(/gas-/, ''),
+        });
+    }
+
+    fetch('/gas/markers', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(markers),
+    });
+}
+
+function setGasMarkers(data) {
+    for (let marker of data) {
+        const markerElem = document.getElementById(`gas-${marker.name}`);
+
+        markerElem.setAttributeNS(null, 'cx', marker.position.x);
+        markerElem.setAttributeNS(null, 'cy', marker.position.y);
+        markerElem.setAttributeNS(null, "r", marker.radius);
+    }
+}
+function getElementTransform(svg, selectedElement) {
+    var transforms = selectedElement.transform.baseVal;
+    // Ensure the first transform is a translate transform
+    if (transforms.length === 0 ||
+        transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+        // Create an transform that translates by (0, 0)
+        var translate = svg.createSVGTransform();
+        translate.setTranslate(0, 0);
+        // Add the translation to the front of the transforms list
+        selectedElement.transform.baseVal.insertItemBefore(translate, 0);
+    }
+    // Get initial translation amount
+    return transforms.getItem(0);
+}
+function makeDraggable(evt) {
+    var svg = evt.target;
+    var selectedElement = false;
+
+    svg.addEventListener('mousedown', startDrag);
+    svg.addEventListener('mousemove', drag);
+    svg.addEventListener('mouseup', endDrag);
+    svg.addEventListener('mouseleave', endDrag);
+
+    function startDrag(evt) {
+        if (evt.target.classList.contains('draggable')) {
+            selectedElement = evt.target;
+            offset = getMousePosition(evt);
+            // Get all the transforms currently on this element
+            transform = getElementTransform(svg, selectedElement)
+            offset.x -= transform.matrix.e;
+            offset.y -= transform.matrix.f;
+        }
+    }
+
+    function drag(evt) {
+        if (selectedElement) {
+            evt.preventDefault();
+            var coord = getMousePosition(evt);
+            transform.setTranslate(coord.x - offset.x, coord.y - offset.y);
+        }
+    }
+
+    function endDrag(evt) {
+        selectedElement = null;
+    }
+
+    function getMousePosition(evt) {
+        var CTM = svg.getScreenCTM();
+        return {
+            x: (evt.clientX - CTM.e) / CTM.a,
+            y: (evt.clientY - CTM.f) / CTM.d
+        };
+    }
+}
+
+window.addEventListener("load", onload);
+</script>
+<button id="save-markers-btn">Save Markers</button>
+<div id="svg-container">
+    <svg xmlns="http://www.w3.org/2000/svg" id="viewbox"
+         viewBox="0 0 1920 1080" onload="makeDraggable(evt)">
+        <circle id="gas-top-left" cx="50" cy="50" r="12" stroke="rgb(200, 200, 11)" stroke-width="3" fill-opacity="0"
+                class="draggable"/>
+    </svg>
+    <img src="/img/kitchen-cam-IR-markers.jpeg" id="reference-img"/>
+</div>
+</body>
+</html>
